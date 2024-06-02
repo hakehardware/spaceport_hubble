@@ -1,0 +1,8 @@
+version: '3.7'
+services:
+  app:
+    build: .
+    container_name: spaceport_hubble_dev
+    command: ["python", "main.py", "--nexus_url", "http://192.168.69.101:9998", "--host_ip", "192.168.69.104"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # Need this to run docker commands
