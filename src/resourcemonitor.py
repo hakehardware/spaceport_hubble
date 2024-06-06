@@ -26,6 +26,14 @@ class ResourceMonitor:
             return None
 
     @staticmethod
+    def get_nats_url(command):
+        for c in command:
+            if 'nats://' in c:
+                return c
+            
+        return None
+    
+    @staticmethod
     def monitor_host(docker_client, host_ip):
         try:
             host = docker_client.info()
@@ -56,12 +64,15 @@ class ResourceMonitor:
             system_cpu_usage = stats['cpu_stats']['system_cpu_usage']
 
             # Calculate memory usage percentage
-            memory_usage_percentage = round((memory_usage / memory_limit) * 100, 2)
+            memory_usage_percentage = round((memory_usage / memory_limit) * 100, 3)
 
             # Calculate CPU usage percentage
             cpu_delta = total_usage - stats['precpu_stats']['cpu_usage']['total_usage']
             system_cpu_delta = system_cpu_usage - stats['precpu_stats']['system_cpu_usage']
-            cpu_usage_percentage = round((cpu_delta / system_cpu_delta) * 100, 2)
+            cpu_usage_percentage = round((cpu_delta / system_cpu_delta) * 100, 3)
+
+            nats_url = ResourceMonitor.get_nats_url(container.attrs['Config']['Cmd'])
+
 
             return {
                 'container_id': container_data['container_id'],
@@ -70,19 +81,22 @@ class ResourceMonitor:
                 'container_alias': container_data['container_alias'],
                 'container_image': container.image.labels["org.opencontainers.image.version"],
                 'container_status': container.status,
+                'container_type': container_data['container_type'],
                 'container_started_at': Utils.normalize_date(container.attrs.get('State').get('StartedAt')),
                 'container_ip': container_ip,
                 'container_mem_usage_pct': memory_usage_percentage,
-                'container_cpu_usage_pct': cpu_usage_percentage
+                'container_cpu_usage_pct': cpu_usage_percentage,
+                'nats_url': nats_url,
+                'is_cluster': 1 if nats_url else 0
             }
 
 
         except Exception as e:
             logger.error("Error monitoring container:", exc_info=e)
 
-    
     @staticmethod
     def start_monitor(containers, docker_client, stop_event, nexus_url, host_ip):
+        logger.info(f"Starting Resource monitor for {len(containers)} containers on Host IP {host_ip}.")
         host = ResourceMonitor.monitor_host(docker_client, host_ip)
         Nexus.upsert_entity(nexus_url, 'host', host)
 
