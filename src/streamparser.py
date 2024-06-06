@@ -618,8 +618,9 @@ class StreamParser:
                 sector_index = sector_index_match.group(1) if sector_index_match else None
 
                 event['event_data'] = {
-                    'Public Key': public_key,
-                    'Sector Index': sector_index
+                    'status': event['event_name'],
+                    'public_key': public_key,
+                    'sector_index': sector_index
                 }
 
             if 'New cache discovered' in log['event_data']:
@@ -639,7 +640,7 @@ class StreamParser:
                     return None
                 
                 event['event_data'] = {
-                    'Cache ID': cache_id
+                    'cache_id': cache_id
                 }
 
             if 'Discovered new farm' in log['event_data'] or 'Farm initialized successfully' in log['event_data']:
@@ -663,8 +664,8 @@ class StreamParser:
                 farm_index = farm_index_match.group(1)
                 
                 event['event_data'] = {
-                    'Farm ID': farm_id,
-                    'Farm Index': farm_index
+                    'farm_id': farm_id,
+                    'farm_index': farm_index
                 }
 
             if 'Idle' in log['event_data'] and 'best:' in log['event_data']:
@@ -1040,7 +1041,7 @@ class StreamParser:
                 
             if event['event_name'] == 'Detecting L3 Cache Groups':
                 response = Nexus.upsert_entity(nexus_url, container_type, data)
-
+ 
             if event['event_name'] == 'Preparing Plotting Thread Pools':
                 response = Nexus.upsert_entity(nexus_url, container_type, data)
 
@@ -1133,6 +1134,9 @@ class StreamParser:
 
             if event['event_name'] == 'Claim':
                 response = Nexus.insert_entity(nexus_url, 'claim', event)
+
+            if event['event_name'] in ['Plot Sector Request', 'Finished Plotting Sector']:
+                response = Nexus.upsert_entity(nexus_url, container_type, data)
             
             if response: 
                 logger.info(f"{event['event_name']} on {container_type}: {response}")
