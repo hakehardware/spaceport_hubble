@@ -1102,7 +1102,7 @@ class StreamParser:
             if event['event_name'] == 'Piece Cache Sync':
                 response = Nexus.upsert_entity(nexus_url, container_type, data)
 
-            if event['event_name'] == 'Finished piece cache synchronization':
+            if event['event_name'] == 'Finished Piece Cache Syncronization':
                 response = Nexus.upsert_entity(nexus_url, container_type, data)
 
             if event['event_name'] == 'Plotting Sector':
@@ -1155,7 +1155,7 @@ class StreamParser:
         container_type = container_data['container_type']
 
         # Upsert the initial data w/ container_id to be sure it exists
-        if container_type != 'node': StreamParser.upsert_initial(nexus_url, container_id, container_alias, container_type)
+        StreamParser.upsert_initial(nexus_url, container_id, container_alias, container_type)
 
         logger.info(f"Starting Stream Parser for {container_alias} of type {container_type}.")
 
